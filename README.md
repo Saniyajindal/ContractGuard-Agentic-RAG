@@ -18,31 +18,32 @@ Enterprise legal contracts and Master Service Agreements (MSAs) often span dozen
 ---
 
 ## 🏗️ System Architecture
+
+```text
 [ Unstructured Legal PDF ]
-│
-▼
+           │
+           ▼
 [ Recursive Chunking (400 chars, 50 overlap) ]
-│
-┌─────┴─────────────────────────┐
-▼                               ▼
+           │
+     ┌─────┴─────────────────────────┐
+     ▼                               ▼
 [ Dense Embeddings ]          [ Sparse Indexing ]
 (all-MiniLM-L6-v2 + ChromaDB)      (BM25 Retriever)
-└─────┬─────────────────────────┘
-▼
+     └─────┬─────────────────────────┘
+           ▼
 [ Reciprocal Rank Fusion / Ensemble Retriever (50/50) ]
-│
-▼
+           │
+           ▼
 [ Grounded Context + Strict Negative Prompt Guardrails ]
-│
-▼
+           │
+           ▼
 [ Meta Llama-3.3-70B via Groq API (Temp = 0.0) ]
-│
-┌─────┴─────────────────────────┐
-▼                               ▼
+           │
+     ┌─────┴─────────────────────────┐
+     ▼                               ▼
 [ Structured Audit Report ]    [ Deterministic Python SLA Tool ]
 (With Exact Page Citations)     (Mathematical Penalty Execution)
-
----
+```
 
 ## 🚀 Key Engineering Highlights
 
@@ -66,25 +67,32 @@ Evaluated across legal MSA test cases following the **RAGAS framework**:
 
 ---
 
-## 📁 Repository Structure
+## 🛠️ Quickstart & Local Setup
 
-```plaintext
-├── app.py                  # Streamlit Interactive Web Application
-├── Enterprise_RAG.ipynb    # Google Colab Research & Validation Notebook
-├── requirements.txt        # Production dependencies
-└── README.md               # System architecture & documentation
-
-
-git clone [https://github.com/YOUR_USERNAME/ContractGuard-Agentic-RAG.git](https://github.com/YOUR_USERNAME/ContractGuard-Agentic-RAG.git)
+### 1. Clone the Repository
+```bash
+git clone https://github.com/YOUR_USERNAME/ContractGuard-Agentic-RAG.git
 cd ContractGuard-Agentic-RAG
+```
+
+### 2. Set Up Virtual Environment
+```bash
 python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
+```
+* On Windows: `venv\Scripts\activate`
+* On macOS/Linux: `source venv/bin/activate`
+
+### 3. Install Dependencies & Run
+```bash
 pip install -r requirements.txt
-# Run Streamlit Web Application
 streamlit run app.py
+```
+
+---
+
+## 📦 Dependencies (`requirements.txt`)
+
+```text
 streamlit>=1.30.0
 langchain>=0.2.0
 langchain-community>=0.2.0
@@ -95,3 +103,4 @@ rank-bm25>=0.2.2
 pypdf>=4.0.0
 chromadb>=0.5.0
 sentence-transformers>=2.2.2
+```
