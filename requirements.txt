@@ -1,0 +1,9 @@
+streamlit
+reportlab
+langchain
+langchain-community
+langchain-groq
+chromadb
+rank_bm25
+sentence-transformers
+pymupdf
