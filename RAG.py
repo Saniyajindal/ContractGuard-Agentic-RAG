@@ -91,15 +91,14 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# Cloud-safe API Key fetching
-import streamlit as st
-
+# Cloud-safe API Key from Secrets
 groq_api_key = st.secrets["GROQ_API_KEY"]
 
+# Production-stable Groq LLM
 llm = ChatGroq(
     model="llama-3.1-8b-instant",
     groq_api_key=groq_api_key,
-    temperature=0
+    temperature=0.0
 )
 # Strict Legal Auditor Prompt (Zero-Hallucination Guardrail)
 audit_prompt = PromptTemplate.from_template("""
