@@ -85,15 +85,15 @@ hybrid_retriever = EnterpriseHybridRetriever(bm25_retriever, chroma_retriever)
 
 print(f"✅ Success! Ingested {len(chunks)} chunks into Hybrid Retrieval Engine.")
 
-import getpass
 import os
+import streamlit as st
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# API Key securely enter karne ke liye prompt aayega
-if "GROQ_API_KEY" not in os.environ:
-    os.environ["GROQ_API_KEY"] = getpass.getpass("Enter your Groq API Key: ")
+# Cloud-safe API Key fetching
+groq_api_key = st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY") or "gsk_your_actual_groq_key_here"
+os.environ["GROQ_API_KEY"] = groq_api_key
 
 # Ultra-fast open-source LLM
 llm = ChatGroq(
