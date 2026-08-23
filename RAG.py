@@ -97,7 +97,7 @@ os.environ["GROQ_API_KEY"] = groq_api_key
 
 # Ultra-fast open-source LLM
 llm = ChatGroq(
-    model_name="llama-3.3-70b-versatile",
+    model_name="llama-3.1-70b-versatile",
     temperature=0.0
 )
 
