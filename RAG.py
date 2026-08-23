@@ -92,7 +92,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 # Cloud-safe API Key fetching
-groq_api_key = st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY") or "gsk_your_actual_groq_key_here"
+groq_api_key = st.secrets["GROQ_API_KEY"]
 os.environ["GROQ_API_KEY"] = groq_api_key
 
 # Ultra-fast open-source LLM
