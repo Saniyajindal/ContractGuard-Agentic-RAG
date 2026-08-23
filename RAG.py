@@ -96,16 +96,18 @@ groq_api_key = st.secrets["GROQ_API_KEY"]
 
 # Production-stable Groq LLM
 llm = ChatGroq(
-    model="llama3-8b-8192",
-    groq_api_key=groq_api_key,
+    model="llama-3.3-70b-versatile",
+    groq_api_key=st.secrets["GROQ_API_KEY"],
     temperature=0.0
 )
 # Strict Legal Auditor Prompt (Zero-Hallucination Guardrail)
-audit_prompt = PromptTemplate.from_template("""
-You are a Senior Enterprise Legal & Compliance Auditor.
-Analyze and answer the user's question STRICTLY using the context provided below.
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
-[CONTEXT]:
+# 1. Chat-compatible prompt format
+audit_prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a Senior Enterprise Legal & Compliance Auditor. Analyze and answer strictly using the provided context."),
+    ("human", """[CONTEXT]:
 {context}
 
 [USER QUESTION]:
@@ -116,29 +118,33 @@ Mandatory Compliance Rules:
 2. ALWAYS cite the exact Page Number and Clause Number if found in context.
 3. If the answer is NOT present in the context, output: "RISK AUDIT ALERT: Clause not specified in source document." Do NOT hallucinate.
 
-Audit Report:
-""")
+Audit Report:""")
+])
 
 qa_chain = audit_prompt | llm | StrOutputParser()
-print("✅ LLM Auditor Chain Configured Successfully!")
 
 def audit_contract(query: str):
     print("\n" + "="*60)
     print(f"🔍 AUDIT QUERY: {query}")
     print("="*60)
 
-    # 1. Hybrid Search (Dense + Sparse) se top relevant chunks retrieve karna
+    # 1. Hybrid Search
     retrieved_docs = hybrid_retriever.invoke(query)
 
-    # 2. Context prepare karna with exact page metadata
-    context_str = "\n\n".join([
-        f"[Source: Page {doc.metadata.get('page', 0) + 1}]:\n" + doc.page_content
-        for doc in retrieved_docs
-    ])
+    # 2. Context check taaki empty payload na jaye
+    if not retrieved_docs:
+        context_str = "No relevant context found in document."
+    else:
+        context_str = "\n\n".join([
+            f"[Source: Page {doc.metadata.get('page', 0) + 1}]:\n" + doc.page_content
+            for doc in retrieved_docs
+        ])
 
-    # 3. LLM Auditor Chain ko context aur question pass karna
+    # 3. LLM Auditor Chain Invoke
     response = qa_chain.invoke({"context": context_str, "question": query})
     print(response)
+    st.write(response)
+    return response
 
 # Test 1: Downtime & SLA Penalty Verification
 audit_contract("What is the penalty if servers face 1 hour of unapproved downtime?")
