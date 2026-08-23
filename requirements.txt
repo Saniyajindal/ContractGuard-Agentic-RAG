@@ -1,9 +1,11 @@
 streamlit
 reportlab
+pypdf
+pymupdf
 langchain
 langchain-community
+langchain-core
 langchain-groq
 chromadb
 rank_bm25
 sentence-transformers
-pymupdf
