@@ -92,15 +92,15 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 # Cloud-safe API Key fetching
-groq_api_key = st.secrets["GROQ_API_KEY"]
-os.environ["GROQ_API_KEY"] = groq_api_key
+# API Key securely enter karne ke liye prompt aayega
+if "GROQ_API_KEY" not in os.environ:
+    os.environ["GROQ_API_KEY"] = getpass.getpass("Enter your Groq API Key: ")
 
 # Ultra-fast open-source LLM
 llm = ChatGroq(
-    model_name="llama-3.1-70b-versatile",
+    model_name="llama-3.3-70b-versatile",
     temperature=0.0
 )
-
 # Strict Legal Auditor Prompt (Zero-Hallucination Guardrail)
 audit_prompt = PromptTemplate.from_template("""
 You are a Senior Enterprise Legal & Compliance Auditor.
