@@ -88,23 +88,20 @@ print(f"✅ Success! Ingested {len(chunks)} chunks into Hybrid Retrieval Engine.
 import os
 import streamlit as st
 from langchain_groq import ChatGroq
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-
-# Cloud-safe API Key from Secrets
-groq_api_key = st.secrets["GROQ_API_KEY"]
-
-# Production-stable Groq LLM
-llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    groq_api_key=st.secrets["GROQ_API_KEY"],
-    temperature=0.0
-)
-# Strict Legal Auditor Prompt (Zero-Hallucination Guardrail)
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# 1. Chat-compatible prompt format
+# 1. API key directly from Streamlit Secrets
+groq_api_key = st.secrets["GROQ_API_KEY"]
+
+# 2. Stable active model
+llm = ChatGroq(
+    model="llama-3.1-8b-instant",
+    groq_api_key=groq_api_key,
+    temperature=0.0
+)
+
+# 3. Chat prompt template
 audit_prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a Senior Enterprise Legal & Compliance Auditor. Analyze and answer strictly using the provided context."),
     ("human", """[CONTEXT]:
@@ -124,29 +121,24 @@ Audit Report:""")
 qa_chain = audit_prompt | llm | StrOutputParser()
 
 def audit_contract(query: str):
-    print("\n" + "="*60)
-    print(f"🔍 AUDIT QUERY: {query}")
-    print("="*60)
-
-    # 1. Hybrid Search
+    # Retrieve docs
     retrieved_docs = hybrid_retriever.invoke(query)
 
-    # 2. Context check taaki empty payload na jaye
+    # Empty context safety check
     if not retrieved_docs:
-        context_str = "No relevant context found in document."
+        context_str = "No relevant context found in source documents."
     else:
         context_str = "\n\n".join([
             f"[Source: Page {doc.metadata.get('page', 0) + 1}]:\n" + doc.page_content
             for doc in retrieved_docs
         ])
 
-    # 3. LLM Auditor Chain Invoke
+    # Invoke LLM
     response = qa_chain.invoke({"context": context_str, "question": query})
-    print(response)
     st.write(response)
     return response
 
-# Test 1: Downtime & SLA Penalty Verification
+# Test execution
 audit_contract("What is the penalty if servers face 1 hour of unapproved downtime?")
 
 # Test 2: Data Compliance & GDPR Clause Check
