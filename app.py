@@ -13,7 +13,7 @@ from langchain_core.output_parsers import StrOutputParser
 st.set_page_config(page_title="ContractGuard AI", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ ContractGuard: Enterprise Legal SLA Auditor")
-st.caption("Hybrid RAG (BM25 + ChromaDB) + Llama-3.3-70B via Groq + Deterministic Penalty Engine")
+st.caption("Hybrid RAG (BM25 + ChromaDB) + Llama-3.1 via Groq + Deterministic Penalty Engine")
 
 # Sidebar Configuration
 with st.sidebar:
@@ -75,7 +75,8 @@ if uploaded_file and groq_api_key:
         query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the penalty if servers face 1 hour of unapproved downtime?")
         
         if st.button("Run Audit"):
-            llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.0, groq_api_key=groq_api_key)
+            # Fixed Model Name here (llama-3.1-8b-instant)
+            llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.0, groq_api_key=groq_api_key)
             audit_prompt = PromptTemplate.from_template("""
             You are a Senior Enterprise Legal Auditor. Analyze and answer the question STRICTLY using the context below.
             [CONTEXT]:
