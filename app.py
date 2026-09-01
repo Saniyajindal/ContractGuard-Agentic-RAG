@@ -12,16 +12,16 @@ from langchain_core.output_parsers import StrOutputParser
 
 st.set_page_config(page_title="ContractGuard AI", page_icon="🛡️", layout="wide")
 
-st.title("🛡️ ContractGuard: Autonomous Legal SLA Auditor")
+st.title("🛡️ ContractGuard: Enterprise Legal SLA Auditor")
 st.caption("Hybrid RAG (BM25 + ChromaDB) + Llama-3.3-70B via Groq + Deterministic Penalty Engine")
 
-# Sidebar for API Configuration
+# Sidebar Configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
     groq_api_key = st.text_input("Enter Groq API Key:", type="password")
     uploaded_file = st.file_uploader("Upload Legal Contract (PDF)", type=["pdf"])
 
-# Deterministic Risk Calculation Tool
+# Deterministic SLA Tool
 def calculate_downtime_penalty(hours_down: float, penalty_per_hour: float = 50000.0) -> dict:
     total_penalty = max(0.0, hours_down) * penalty_per_hour
     return {
@@ -47,7 +47,7 @@ class EnterpriseHybridRetriever:
         return unique_docs[:3]
 
 if uploaded_file and groq_api_key:
-    # Save temporary PDF
+    # Save uploaded file locally
     with open("temp_contract.pdf", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
@@ -64,8 +64,9 @@ if uploaded_file and groq_api_key:
         bm25_ret.k = 2
         return EnterpriseHybridRetriever(bm25_ret, chroma_ret)
 
-    hybrid_retriever = process_document()
-    st.success("Contract successfully indexed into Hybrid RAG Engine!")
+    with st.spinner("Indexing contract into Hybrid Retrieval Engine..."):
+        hybrid_retriever = process_document()
+    st.success("✅ Contract successfully indexed into Hybrid RAG Engine!")
 
     col1, col2 = st.columns([2, 1])
 
@@ -91,7 +92,7 @@ if uploaded_file and groq_api_key:
             retrieved_docs = hybrid_retriever.invoke(query)
             context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
             
-            with st.spinner("Analyzing legal clauses..."):
+            with st.spinner("Auditing legal clauses..."):
                 response = qa_chain.invoke({"context": context_str, "question": query})
             
             st.markdown("### 📋 Audit Findings")
@@ -99,11 +100,11 @@ if uploaded_file and groq_api_key:
 
     with col2:
         st.subheader("⚡ Deterministic SLA Tool")
-        downtime_hours = st.number_input("Observed Outage Hours:", min_value=0.0, max_value=100.0, value=3.5, step=0.5)
-        if st.button("Calculate SLA Penalty"):
+        downtime_hours = st.number_input("Observed Outage Duration (Hours):", min_value=0.0, max_value=100.0, value=3.5, step=0.5)
+        if st.button("Calculate Financial Liability"):
             risk_result = calculate_downtime_penalty(downtime_hours)
             st.metric("Total Liability", risk_result["total_financial_liability_usd"])
-            st.write(f"**Breach Severity:** `{risk_result['breach_severity']}`")
+            st.write(f"**Severity Level:** `{risk_result['breach_severity']}`")
             st.json(risk_result)
 else:
-    st.info("👈 Upload a Contract PDF and enter your Groq API Key in the sidebar to start.")
+    st.info("👈 Please enter your Groq API Key and upload a PDF in the sidebar to begin.")
