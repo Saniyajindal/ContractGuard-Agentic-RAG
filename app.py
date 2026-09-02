@@ -1,7 +1,6 @@
 import os
 import json
 import streamlit as st
-from groq import Groq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
@@ -21,12 +20,11 @@ with st.sidebar:
     st.header("⚙️ Configuration")
     groq_api_key = st.text_input("Enter Groq API Key:", type="password")
     
-    # 100% Active Groq models list (Current Verified Slugs)
+    # Active, verified Groq models
     model_choice = st.selectbox(
         "Select Groq Model:",
         [
             "llama-3.1-8b-instant",
-            "llama-3.3-70b-versatile",
             "mixtral-8x7b-32768"
         ],
         index=0
@@ -87,44 +85,35 @@ if uploaded_file and groq_api_key:
         query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the document about?")
         
         if st.button("Run Audit"):
-            # Multi-model fallback list: agar pehla fail hua toh agla run hoga automatically
-            candidate_models = [model_choice, "llama-3.1-8b-instant", "mixtral-8x7b-32768", "llama3-8b-8192"]
-            candidate_models = list(dict.fromkeys(candidate_models)) # unique list
-            
-            response = None
-            last_error = None
-
-            with st.spinner("Auditing document clauses with Groq..."):
-                for m in candidate_models:
-                    try:
-                        llm = ChatGroq(model_name=m, temperature=0.0, groq_api_key=groq_api_key)
-                        audit_prompt = PromptTemplate.from_template("""
-                        You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
-                        [CONTEXT]:
-                        {context}
-                        [USER QUESTION]:
-                        {question}
-                        Rules:
-                        1. State findings in structured bullet points.
-                        2. ALWAYS cite the exact Page Number and Clause/Heading if found.
-                        3. If not present in context, output: "RISK AUDIT ALERT: Information not specified in source document."
-                        Audit Report:
-                        """)
-                        qa_chain = audit_prompt | llm | StrOutputParser()
-                        retrieved_docs = hybrid_retriever.invoke(query)
-                        context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
-                        response = qa_chain.invoke({"context": context_str, "question": query})
-                        break
-                    except Exception as err:
-                        last_error = err
-                        continue
-
-            if response:
-                st.markdown("### 📋 Audit Findings")
-                st.write(response)
-            else:
-                st.error(f"Groq API Error: {str(last_error)}")
-                st.info("Please verify your Groq API Key at console.groq.com/keys")
+            with st.spinner(f"Auditing document clauses using {model_choice}..."):
+                try:
+                    llm = ChatGroq(
+                        model_name=model_choice,
+                        temperature=0.0,
+                        groq_api_key=groq_api_key
+                    )
+                    audit_prompt = PromptTemplate.from_template("""
+                    You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
+                    [CONTEXT]:
+                    {context}
+                    [USER QUESTION]:
+                    {question}
+                    Rules:
+                    1. State findings in structured bullet points.
+                    2. ALWAYS cite the exact Page Number and Clause/Heading if found.
+                    3. If not present in context, output: "RISK AUDIT ALERT: Information not specified in source document."
+                    Audit Report:
+                    """)
+                    qa_chain = audit_prompt | llm | StrOutputParser()
+                    retrieved_docs = hybrid_retriever.invoke(query)
+                    context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
+                    response = qa_chain.invoke({"context": context_str, "question": query})
+                    
+                    st.markdown("### 📋 Audit Findings")
+                    st.write(response)
+                except Exception as err:
+                    st.error(f"Groq API Error with {model_choice}: {str(err)}")
+                    st.info("Try switching the model to 'mixtral-8x7b-32768' in the sidebar dropdown.")
 
     with col2:
         st.subheader("⚡ Deterministic SLA Tool")
