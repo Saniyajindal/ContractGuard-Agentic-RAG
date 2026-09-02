@@ -6,30 +6,19 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 st.set_page_config(page_title="ContractGuard AI", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ ContractGuard: Enterprise Legal SLA Auditor")
-st.caption("Hybrid RAG (BM25 + ChromaDB) + Groq High-Speed LLM + Deterministic Penalty Engine")
+st.caption("Hybrid RAG (BM25 + ChromaDB) + Google Gemini 1.5 Flash + Deterministic Penalty Engine")
 
 # Sidebar Configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
-    groq_api_key = st.text_input("Enter Groq API Key:", type="password")
-    
-    # Active, verified Groq models
-    model_choice = st.selectbox(
-        "Select Groq Model:",
-        [
-            "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768"
-        ],
-        index=0
-    )
-    
+    gemini_api_key = st.text_input("Enter Google Gemini API Key:", type="password")
     uploaded_file = st.file_uploader("Upload Legal Contract (PDF)", type=["pdf"])
 
 # Deterministic SLA Tool
@@ -57,7 +46,7 @@ class EnterpriseHybridRetriever:
                 unique_docs.append(doc)
         return unique_docs[:3]
 
-if uploaded_file and groq_api_key:
+if uploaded_file and gemini_api_key:
     with open("temp_contract.pdf", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
@@ -85,12 +74,12 @@ if uploaded_file and groq_api_key:
         query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the document about?")
         
         if st.button("Run Audit"):
-            with st.spinner(f"Auditing document clauses using {model_choice}..."):
+            with st.spinner("Auditing document clauses with Gemini 1.5 Flash..."):
                 try:
-                    llm = ChatGroq(
-                        model_name=model_choice,
+                    llm = ChatGoogleGenerativeAI(
+                        model="gemini-1.5-flash",
                         temperature=0.0,
-                        groq_api_key=groq_api_key
+                        google_api_key=gemini_api_key
                     )
                     audit_prompt = PromptTemplate.from_template("""
                     You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
@@ -112,8 +101,7 @@ if uploaded_file and groq_api_key:
                     st.markdown("### 📋 Audit Findings")
                     st.write(response)
                 except Exception as err:
-                    st.error(f"Groq API Error with {model_choice}: {str(err)}")
-                    st.info("Try switching the model to 'mixtral-8x7b-32768' in the sidebar dropdown.")
+                    st.error(f"Gemini API Error: {str(err)}")
 
     with col2:
         st.subheader("⚡ Deterministic SLA Tool")
@@ -124,4 +112,4 @@ if uploaded_file and groq_api_key:
             st.write(f"**Severity Level:** `{risk_result['breach_severity']}`")
             st.json(risk_result)
 else:
-    st.info("👈 Please enter your Groq API Key and upload a PDF in the sidebar to begin.")
+    st.info("👈 Please enter your Gemini API Key and upload a PDF in the sidebar to begin.")
