@@ -11,7 +11,7 @@ from langchain_community.retrievers import BM25Retriever
 st.set_page_config(page_title="ContractGuard AI", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ ContractGuard: Enterprise Legal SLA Auditor")
-st.caption("Hybrid RAG (BM25 + ChromaDB) + Google Gemini + Deterministic Penalty Engine")
+st.caption("Hybrid RAG (BM25 + ChromaDB) + Google Gemini 3.6 Flash + Deterministic Penalty Engine")
 
 # Sidebar Configuration
 with st.sidebar:
@@ -72,12 +72,12 @@ if uploaded_file and gemini_api_key:
         query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the document about?")
         
         if st.button("Run Audit"):
-            with st.spinner("Auditing document clauses with Gemini..."):
+            with st.spinner("Auditing document clauses with Gemini 3.6 Flash..."):
                 try:
                     genai.configure(api_key=gemini_api_key)
                     
-                    # Direct initialization with current API recommended model
-                    model = genai.GenerativeModel("gemini-2.5-flash")
+                    # Updated to official current model slug
+                    model = genai.GenerativeModel("gemini-3.6-flash")
                     
                     retrieved_docs = hybrid_retriever.invoke(query)
                     context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
