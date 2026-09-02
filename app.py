@@ -21,13 +21,12 @@ with st.sidebar:
     groq_api_key = st.text_input("Enter Groq API Key:", type="password")
     
     # Active Groq Models dropdown (avoids NotFoundError)
-    model_choice = st.selectbox(
+   model_choice = st.selectbox(
         "Select Groq Model:",
         [
-            "llama-3.3-70b-versatile",
-            "gemma2-9b-it",
-            "llama3-70b-8192",
-            "llama3-8b-8192"
+            "llama-3.1-8b-instant",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
         ],
         index=0
     )
