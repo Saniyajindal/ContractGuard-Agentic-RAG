@@ -1,19 +1,17 @@
 import os
 import json
 import streamlit as st
+import google.generativeai as genai
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
 
 st.set_page_config(page_title="ContractGuard AI", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ ContractGuard: Enterprise Legal SLA Auditor")
-st.caption("Hybrid RAG (BM25 + ChromaDB) + Google Gemini 1.5 Flash + Deterministic Penalty Engine")
+st.caption("Hybrid RAG (BM25 + ChromaDB) + Google Gemini + Deterministic Penalty Engine")
 
 # Sidebar Configuration
 with st.sidebar:
@@ -74,32 +72,34 @@ if uploaded_file and gemini_api_key:
         query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the document about?")
         
         if st.button("Run Audit"):
-            with st.spinner("Auditing document clauses with Gemini 1.5 Flash..."):
+            with st.spinner("Auditing document clauses with Gemini..."):
                 try:
-                    llm = ChatGoogleGenerativeAI(
-                        model="gemini-1.5-flash",
-                        temperature=0.0,
-                        google_api_key=gemini_api_key
-                    )
-                    audit_prompt = PromptTemplate.from_template("""
+                    genai.configure(api_key=gemini_api_key)
+                    model = genai.GenerativeModel("gemini-1.5-flash-latest")
+                    
+                    retrieved_docs = hybrid_retriever.invoke(query)
+                    context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
+                    
+                    prompt = f"""
                     You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
+
                     [CONTEXT]:
-                    {context}
+                    {context_str}
+
                     [USER QUESTION]:
-                    {question}
+                    {query}
+
                     Rules:
                     1. State findings in structured bullet points.
                     2. ALWAYS cite the exact Page Number and Clause/Heading if found.
                     3. If not present in context, output: "RISK AUDIT ALERT: Information not specified in source document."
+
                     Audit Report:
-                    """)
-                    qa_chain = audit_prompt | llm | StrOutputParser()
-                    retrieved_docs = hybrid_retriever.invoke(query)
-                    context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
-                    response = qa_chain.invoke({"context": context_str, "question": query})
+                    """
+                    response = model.generate_content(prompt)
                     
                     st.markdown("### 📋 Audit Findings")
-                    st.write(response)
+                    st.write(response.text)
                 except Exception as err:
                     st.error(f"Gemini API Error: {str(err)}")
 
