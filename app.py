@@ -1,6 +1,7 @@
 import os
 import json
 import streamlit as st
+from groq import Groq
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
@@ -20,13 +21,13 @@ with st.sidebar:
     st.header("⚙️ Configuration")
     groq_api_key = st.text_input("Enter Groq API Key:", type="password")
     
-    # Active Groq Models dropdown (avoids NotFoundError)
+    # 100% Active Groq models list (Current Verified Slugs)
     model_choice = st.selectbox(
         "Select Groq Model:",
         [
             "llama-3.1-8b-instant",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
+            "llama-3.3-70b-versatile",
+            "mixtral-8x7b-32768"
         ],
         index=0
     )
@@ -75,43 +76,55 @@ if uploaded_file and groq_api_key:
         bm25_ret.k = 2
         return EnterpriseHybridRetriever(bm25_ret, chroma_ret)
 
-    with st.spinner("Indexing contract into Hybrid Retrieval Engine..."):
+    with st.spinner("Indexing document into Hybrid Retrieval Engine..."):
         hybrid_retriever = process_document()
-    st.success("✅ Contract successfully indexed into Hybrid RAG Engine!")
+    st.success("✅ Document successfully indexed into Hybrid RAG Engine!")
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
         st.subheader("🔍 Legal Clause Audit")
-        query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the penalty if servers face 1 hour of unapproved downtime?")
+        query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the document about?")
         
         if st.button("Run Audit"):
-            try:
-                llm = ChatGroq(model_name=model_choice, temperature=0.0, groq_api_key=groq_api_key)
-                audit_prompt = PromptTemplate.from_template("""
-                You are a Senior Enterprise Legal Auditor. Analyze and answer the question STRICTLY using the context below.
-                [CONTEXT]:
-                {context}
-                [USER QUESTION]:
-                {question}
-                Rules:
-                1. State the exact finding clearly in structured bullet points.
-                2. ALWAYS cite the exact Page Number and Clause Number.
-                3. If not present, output: "RISK AUDIT ALERT: Clause not specified in source document."
-                Audit Report:
-                """)
-                qa_chain = audit_prompt | llm | StrOutputParser()
-                retrieved_docs = hybrid_retriever.invoke(query)
-                context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
-                
-                with st.spinner(f"Auditing legal clauses using {model_choice}..."):
-                    response = qa_chain.invoke({"context": context_str, "question": query})
-                
+            # Multi-model fallback list: agar pehla fail hua toh agla run hoga automatically
+            candidate_models = [model_choice, "llama-3.1-8b-instant", "mixtral-8x7b-32768", "llama3-8b-8192"]
+            candidate_models = list(dict.fromkeys(candidate_models)) # unique list
+            
+            response = None
+            last_error = None
+
+            with st.spinner("Auditing document clauses with Groq..."):
+                for m in candidate_models:
+                    try:
+                        llm = ChatGroq(model_name=m, temperature=0.0, groq_api_key=groq_api_key)
+                        audit_prompt = PromptTemplate.from_template("""
+                        You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
+                        [CONTEXT]:
+                        {context}
+                        [USER QUESTION]:
+                        {question}
+                        Rules:
+                        1. State findings in structured bullet points.
+                        2. ALWAYS cite the exact Page Number and Clause/Heading if found.
+                        3. If not present in context, output: "RISK AUDIT ALERT: Information not specified in source document."
+                        Audit Report:
+                        """)
+                        qa_chain = audit_prompt | llm | StrOutputParser()
+                        retrieved_docs = hybrid_retriever.invoke(query)
+                        context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
+                        response = qa_chain.invoke({"context": context_str, "question": query})
+                        break
+                    except Exception as err:
+                        last_error = err
+                        continue
+
+            if response:
                 st.markdown("### 📋 Audit Findings")
                 st.write(response)
-            except Exception as e:
-                st.error(f"Error calling Groq model '{model_choice}': {str(e)}")
-                st.info("💡 Tip: Sidebar se doosra model choose karo (jaise `gemma2-9b-it` ya `llama3-70b-8192`) aur dobara Run Audit dabao.")
+            else:
+                st.error(f"Groq API Error: {str(last_error)}")
+                st.info("Please verify your Groq API Key at console.groq.com/keys")
 
     with col2:
         st.subheader("⚡ Deterministic SLA Tool")
