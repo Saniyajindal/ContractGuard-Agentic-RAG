@@ -1,107 +1,26 @@
-# 🛡️ ContractGuard: Enterprise Agentic RAG System
-> **Autonomous Legal Compliance Auditing & Deterministic SLA Risk Quantification Engine**
-
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![LangChain](https://img.shields.io/badge/Framework-LangChain-green.svg)](https://www.langchain.com/)
-[![LLM](https://img.shields.io/badge/LLM-Meta%20Llama--3.3--70B%20(Groq)-orange.svg)](https://groq.com/)
-[![VectorDB](https://img.shields.io/badge/VectorDB-ChromaDB-purple.svg)](https://www.trychroma.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
----
-
-## 📌 Executive Summary
-
-Enterprise legal contracts and Master Service Agreements (MSAs) often span dozens of pages with nested clauses, stringent SLAs, and heavy financial liability terms. Standard generative search pipelines frequently suffer from **keyword fragmentation** (missing specific clause numbers) and **stochastic hallucinations** (guessing terms or mathematical figures).
-
-**ContractGuard** is a production-grade **Agentic RAG (Retrieval-Augmented Generation)** pipeline engineered to perform automated compliance auditing, clause extraction with exact page citations, and deterministic financial liability calculations.
-
----
-
-## 🏗️ System Architecture
-
-```text
-[ Unstructured Legal PDF ]
-           │
-           ▼
-[ Recursive Chunking (400 chars, 50 overlap) ]
-           │
-     ┌─────┴─────────────────────────┐
-     ▼                               ▼
-[ Dense Embeddings ]          [ Sparse Indexing ]
-(all-MiniLM-L6-v2 + ChromaDB)      (BM25 Retriever)
-     └─────┬─────────────────────────┘
-           ▼
-[ Reciprocal Rank Fusion / Ensemble Retriever (50/50) ]
-           │
-           ▼
-[ Grounded Context + Strict Negative Prompt Guardrails ]
-           │
-           ▼
-[ Meta Llama-3.3-70B via Groq API (Temp = 0.0) ]
-           │
-     ┌─────┴─────────────────────────┐
-     ▼                               ▼
-[ Structured Audit Report ]    [ Deterministic Python SLA Tool ]
-(With Exact Page Citations)     (Mathematical Penalty Execution)
-```
-
-## 🚀 Key Engineering Highlights
-
-* **Multi-Stage Hybrid Retrieval:** Combines `sentence-transformers/all-MiniLM-L6-v2` dense embeddings with `BM25` sparse keyword matching to accurately capture exact clause identifiers (e.g., *Clause 4.2*).
-* **Zero-Hallucination Guardrails:** Implements a strict legal auditor persona constrained to context-only extraction. Triggers automated `RISK AUDIT ALERT` flags when requested clauses are absent rather than fabricating information.
-* **Deterministic Risk & Penalty Tooling:** Offloads numerical SLA penalty calculations ($Total Liability = Hours \times Hourly Rate$) to an isolated deterministic Python agent tool, eliminating LLM arithmetic errors (100% computational accuracy).
-* **Low-Latency Inference:** Powered by Meta’s `Llama-3.3-70B-Versatile` model served via Groq's high-speed LPU infrastructure.
-
----
-
-## 📊 Evaluation & Benchmark Metrics
-
-Evaluated across legal MSA test cases following the **RAGAS framework**:
-
-| Metric | Score | Mechanism |
-| :--- | :--- | :--- |
-| **Context Groundedness (Faithfulness)** | **~99%** | Enforced via strict negative constraints & zero temperature |
-| **Retrieval Hit Rate / Precision** | **>92%** | Achieved via Hybrid Ensemble (Dense ChromaDB + Sparse BM25) |
-| **Arithmetic Liability Accuracy** | **100%** | Handled by deterministic algorithmic tools, bypassing LLM math |
-| **End-to-End Latency** | **< 1.5s** | High-throughput inference via Groq API |
-
----
-
-## 🛠️ Quickstart & Local Setup
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/YOUR_USERNAME/ContractGuard-Agentic-RAG.git
-cd ContractGuard-Agentic-RAG
-```
-
-### 2. Set Up Virtual Environment
-```bash
-python -m venv venv
-```
-* On Windows: `venv\Scripts\activate`
-* On macOS/Linux: `source venv/bin/activate`
-
-### 3. Install Dependencies & Run
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
-
----
-
-## 📦 Dependencies (`requirements.txt`)
-
-```text
-streamlit>=1.30.0
-langchain>=0.2.0
-langchain-community>=0.2.0
-langchain-groq>=0.1.0
-langchain-huggingface>=0.0.3
-langchain-chroma>=0.1.0
-rank-bm25>=0.2.2
-pypdf>=4.0.0
-chromadb>=0.5.0
-sentence-transformers>=2.2.2
-```
-
+🛡️ ContractGuard: Enterprise Legal SLA Auditor & Hybrid RAG EngineAn enterprise-grade, deterministic Legal & SLA auditing system built with Hybrid RAG (BM25 + ChromaDB), Google Gemini 3.6 Flash, and a rule-based Deterministic Penalty Execution Engine.Designed to parse complex technical spec sheets, commercial proposals, and legal service level agreements (SLAs) with zero arithmetic hallucination and verifiable page-level audit trails.🌐 Live DeploymentAccess the interactive web dashboard on Streamlit Cloud:👉 ContractGuard Live Application⚡ Key Architectural FeaturesHybrid Retrieval Mechanism (Dense + Sparse Fusion):ChromaDB (all-MiniLM-L6-v2): Captures high-dimensional contextual embeddings and semantic similarity.BM25 Retriever: Preserves exact token matches for technical identifiers, contract clauses, and specific numerical constraints.Fusion Deduplication: Merges and prioritizes unique top-$k$ contextual windows for LLM inference.Deterministic Financial Execution Tool:Mitigates LLM numerical hallucinations by delegating SLA downtime penalty computations to a standalone, deterministic Python evaluation engine.Dynamically computes financial liability thresholds and flags operational breach severity levels (MODERATE vs CRITICAL).Zero-Hallucination Audit Guardrails:Prompt-constrained extraction guarantees answers strictly reflect the contextual documents.Mandates exact citations: [Source: Page X, Heading: Y].Triggers explicit fallback alerts (RISK AUDIT ALERT) whenever queried parameters are missing from the source text.🛠️ Tech Stack & DependenciesFrontend / UI: StreamlitRAG Orchestration: LangChain Core, LangChain CommunityDense Retrieval / Vector Store: ChromaDB, HuggingFace Transformers (sentence-transformers/all-MiniLM-L6-v2)Sparse Retrieval: Rank-BM25LLM Engine: Google Gemini (gemini-3.6-flash) via google-generativeaiDocument Parsing: PyPDF📋 System ArchitecturePlaintext[PDF Upload]
+      │
+      ▼
+[Recursive Text Splitting]
+      ├──► [Dense Pipeline: MiniLM-L6-v2] ──► [ChromaDB Vector Store]
+      │                                                │
+      └──► [Sparse Pipeline: Exact Tokens] ────► [BM25 Index]
+                                                       │
+                                                       ▼
+[Audit Query] ──────────────────────────► [Hybrid Retrieval Fusion Engine]
+                                                       │
+                                                       ▼
+[Deterministic SLA Tool] ◄──── [Context Injection + Strict Audit Guardrails]
+ (Rule-Based Math Engine)                              │
+                                                       ▼
+                                         [Gemini 3.6 Flash Inference]
+                                                       │
+                                                       ▼
+                                     [Structured Audit Report with Citations]
+🚀 Local Setup & InstallationClone the Repository:Bashgit clone https://github.com/Saniya-29/contractguard-agentic-rag.git
+cd contractguard-agentic-rag
+Create and Activate a Virtual Environment:Bashpython -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+Install Dependencies:Bashpip install -r requirements.txt
+Run the Streamlit Application:Bashstreamlit run app.py
+Authenticate:Provide your Gemini API Key directly in the sidebar interface to begin indexing documents and running audits.
