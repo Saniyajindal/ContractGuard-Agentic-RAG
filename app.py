@@ -75,31 +75,46 @@ if uploaded_file and gemini_api_key:
             with st.spinner("Auditing document clauses with Gemini..."):
                 try:
                     genai.configure(api_key=gemini_api_key)
-                    model = genai.GenerativeModel("gemini-1.5-flash-latest")
                     
-                    retrieved_docs = hybrid_retriever.invoke(query)
-                    context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
+                    # Live detection of available models in user's key
+                    available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
                     
-                    prompt = f"""
-                    You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
-
-                    [CONTEXT]:
-                    {context_str}
-
-                    [USER QUESTION]:
-                    {query}
-
-                    Rules:
-                    1. State findings in structured bullet points.
-                    2. ALWAYS cite the exact Page Number and Clause/Heading if found.
-                    3. If not present in context, output: "RISK AUDIT ALERT: Information not specified in source document."
-
-                    Audit Report:
-                    """
-                    response = model.generate_content(prompt)
+                    # Choose available model dynamically
+                    chosen_model = None
+                    for candidate in ["models/gemini-1.5-flash", "models/gemini-1.5-pro", "models/gemini-pro"]:
+                        if candidate in available:
+                            chosen_model = candidate
+                            break
                     
-                    st.markdown("### 📋 Audit Findings")
-                    st.write(response.text)
+                    if not chosen_model and available:
+                        chosen_model = available[0]
+                    
+                    if not chosen_model:
+                        st.error("No content generation models found for this API key. Ensure Generative Language API is enabled in Google Cloud Console.")
+                    else:
+                        model = genai.GenerativeModel(chosen_model)
+                        retrieved_docs = hybrid_retriever.invoke(query)
+                        context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
+                        
+                        prompt = f"""
+                        You are an Enterprise Compliance Auditor. Analyze and answer the question STRICTLY using the context below.
+
+                        [CONTEXT]:
+                        {context_str}
+
+                        [USER QUESTION]:
+                        {query}
+
+                        Rules:
+                        1. State findings in structured bullet points.
+                        2. ALWAYS cite the exact Page Number and Clause/Heading if found.
+                        3. If not present in context, output: "RISK AUDIT ALERT: Information not specified in source document."
+
+                        Audit Report:
+                        """
+                        response = model.generate_content(prompt)
+                        st.markdown(f"### 📋 Audit Findings *(via {chosen_model})*")
+                        st.write(response.text)
                 except Exception as err:
                     st.error(f"Gemini API Error: {str(err)}")
 
