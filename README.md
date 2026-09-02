@@ -104,3 +104,4 @@ pypdf>=4.0.0
 chromadb>=0.5.0
 sentence-transformers>=2.2.2
 ```
+
