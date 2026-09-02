@@ -1,4 +1,5 @@
 # 🛡️ ContractGuard | Enterprise Legal & SLA Audit Engine
+
 > **Next-Gen Hybrid RAG System paired with a Deterministic Arithmetic Guardrail for verifiable, zero-hallucination legal document analysis.**
 
 <div align="center">
@@ -16,9 +17,10 @@
 ---
 
 ### 💡 Why ContractGuard?
+
 Standard RAG architectures fail in compliance and legal domains because:
-1. **Semantic Drift:** Vector similarity often misses exact clause numbers, penalty rates, or strict legal identifiers.
-2. **Arithmetic Hallucination:** LLMs are notorious for botching financial downtime calculations and penalty caps.
+* **Semantic Drift:** Vector similarity often misses exact clause numbers, penalty rates, or strict legal identifiers.
+* **Arithmetic Hallucination:** LLMs are notorious for botching financial downtime calculations and penalty caps.
 
 **ContractGuard** solves this by unifying **Dense Semantic Embeddings** with **Exact BM25 Lexical Matching**, while offloading all penalty arithmetic to a **deterministic runtime engine**.
 
@@ -37,7 +39,7 @@ Standard RAG architectures fail in compliance and legal domains because:
 
 ### 🏗 Under-The-Hood Architecture
 
-```ascii
+```text
               ┌────────────────────────────────────────────────────────┐
               │                   Legal Contract (PDF)                 │
               └───────────────────────────┬────────────────────────────┘
@@ -66,5 +68,5 @@ Standard RAG architectures fail in compliance and legal domains because:
                                           │
                                           ▼
                       ┌───────────────────────────────────────┐
-                      │    Audited Compliance Findings Dashboard    │
+                      │  Audited Compliance Findings Dashboard│
                       └───────────────────────────────────────┘
