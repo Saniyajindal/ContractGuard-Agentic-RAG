@@ -13,12 +13,25 @@ from langchain_core.output_parsers import StrOutputParser
 st.set_page_config(page_title="ContractGuard AI", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ ContractGuard: Enterprise Legal SLA Auditor")
-st.caption("Hybrid RAG (BM25 + ChromaDB) + Llama-3.1 via Groq + Deterministic Penalty Engine")
+st.caption("Hybrid RAG (BM25 + ChromaDB) + Groq High-Speed LLM + Deterministic Penalty Engine")
 
 # Sidebar Configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
     groq_api_key = st.text_input("Enter Groq API Key:", type="password")
+    
+    # Active Groq Models dropdown (avoids NotFoundError)
+    model_choice = st.selectbox(
+        "Select Groq Model:",
+        [
+            "llama-3.3-70b-versatile",
+            "gemma2-9b-it",
+            "llama3-70b-8192",
+            "llama3-8b-8192"
+        ],
+        index=0
+    )
+    
     uploaded_file = st.file_uploader("Upload Legal Contract (PDF)", type=["pdf"])
 
 # Deterministic SLA Tool
@@ -47,7 +60,6 @@ class EnterpriseHybridRetriever:
         return unique_docs[:3]
 
 if uploaded_file and groq_api_key:
-    # Save uploaded file locally
     with open("temp_contract.pdf", "wb") as f:
         f.write(uploaded_file.getbuffer())
 
@@ -75,29 +87,32 @@ if uploaded_file and groq_api_key:
         query = st.text_input("Enter Audit Query / Compliance Clause Check:", "What is the penalty if servers face 1 hour of unapproved downtime?")
         
         if st.button("Run Audit"):
-            # Fixed Model Name here (llama-3.1-8b-instant)
-            llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.0, groq_api_key=groq_api_key)
-            audit_prompt = PromptTemplate.from_template("""
-            You are a Senior Enterprise Legal Auditor. Analyze and answer the question STRICTLY using the context below.
-            [CONTEXT]:
-            {context}
-            [USER QUESTION]:
-            {question}
-            Rules:
-            1. State the exact finding clearly in structured bullet points.
-            2. ALWAYS cite the exact Page Number and Clause Number.
-            3. If not present, output: "RISK AUDIT ALERT: Clause not specified in source document."
-            Audit Report:
-            """)
-            qa_chain = audit_prompt | llm | StrOutputParser()
-            retrieved_docs = hybrid_retriever.invoke(query)
-            context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
-            
-            with st.spinner("Auditing legal clauses..."):
-                response = qa_chain.invoke({"context": context_str, "question": query})
-            
-            st.markdown("### 📋 Audit Findings")
-            st.write(response)
+            try:
+                llm = ChatGroq(model_name=model_choice, temperature=0.0, groq_api_key=groq_api_key)
+                audit_prompt = PromptTemplate.from_template("""
+                You are a Senior Enterprise Legal Auditor. Analyze and answer the question STRICTLY using the context below.
+                [CONTEXT]:
+                {context}
+                [USER QUESTION]:
+                {question}
+                Rules:
+                1. State the exact finding clearly in structured bullet points.
+                2. ALWAYS cite the exact Page Number and Clause Number.
+                3. If not present, output: "RISK AUDIT ALERT: Clause not specified in source document."
+                Audit Report:
+                """)
+                qa_chain = audit_prompt | llm | StrOutputParser()
+                retrieved_docs = hybrid_retriever.invoke(query)
+                context_str = "\n\n".join([f"[Source: Page {d.metadata.get('page', 0) + 1}]:\n" + d.page_content for d in retrieved_docs])
+                
+                with st.spinner(f"Auditing legal clauses using {model_choice}..."):
+                    response = qa_chain.invoke({"context": context_str, "question": query})
+                
+                st.markdown("### 📋 Audit Findings")
+                st.write(response)
+            except Exception as e:
+                st.error(f"Error calling Groq model '{model_choice}': {str(e)}")
+                st.info("💡 Tip: Sidebar se doosra model choose karo (jaise `gemma2-9b-it` ya `llama3-70b-8192`) aur dobara Run Audit dabao.")
 
     with col2:
         st.subheader("⚡ Deterministic SLA Tool")
